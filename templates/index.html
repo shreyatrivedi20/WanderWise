@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WanderWise — Smart Trip Budget Planner</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="nav-logo">
+        <i class="ti ti-backpack" aria-hidden="true"></i>
+        <div>
+          <div class="nav-logo-text">WanderWise</div>
+          <div class="nav-logo-sub">Smart Trip Budget Planner</div>
+        </div>
+      </div>
+      <div class="nav-right">
+        <select id="tripSelect" onchange="switchTrip()">
+          <option value="">-- Select a Trip --</option>
+        </select>
+        <button onclick="createNewTrip()" class="nav-btn">
+          <i class="ti ti-plus" aria-hidden="true"></i> New Trip
+        </button>
+      </div>
+    </header>
+
+    <!-- TRIP BANNER -->
+    <div class="trip-banner" id="tripBanner">
+      <div class="trip-info">
+        <div class="trip-name" id="tripBannerName">No trip selected</div>
+        <div class="trip-meta">
+          <div class="trip-meta-item"><i class="ti ti-map-pin" aria-hidden="true"></i> <span id="tripBannerDest">—</span></div>
+          <div class="trip-meta-item"><i class="ti ti-calendar" aria-hidden="true"></i> <span id="tripBannerDates">—</span></div>
+        </div>
+      </div>
+      <div class="trip-badges" id="tripBadges"></div>
+    </div>
+
+    <main class="main">
+
+      <!-- WARNING BANNER -->
+      <div id="warningBanner" class="warn-banner" style="display:none;">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        <span id="warningText"></span>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label"><i class="ti ti-wallet" aria-hidden="true"></i> Total Budget</div>
+          <div class="stat-val" id="totalBudget">₹0</div>
+          <div class="stat-sub">set for this trip</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><i class="ti ti-trending-up" aria-hidden="true"></i> Amount Spent</div>
+          <div class="stat-val red" id="totalSpent">₹0</div>
+          <div class="stat-sub" id="expenseCount">0 expenses</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><i class="ti ti-piggy-bank" aria-hidden="true"></i> Remaining</div>
+          <div class="stat-val green" id="totalRemaining">₹0</div>
+          <div class="stat-sub" id="perDaySub">available</div>
+        </div>
+      </div>
+
+      <!-- PROGRESS BAR -->
+      <div class="prog-card">
+        <div class="prog-head">
+          <span class="prog-title">Budget progress</span>
+          <span class="prog-pct" id="progressLabel">0% used</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill" id="progressBar" style="width:0%;"></div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs-row">
+        <button class="tab-btn active" onclick="showTab('expenses')" id="tab-expenses">
+          <i class="ti ti-receipt" aria-hidden="true"></i> Expenses
+        </button>
+        <button class="tab-btn" onclick="showTab('ai')" id="tab-ai">
+          <i class="ti ti-robot" aria-hidden="true"></i> AI Advisor
+        </button>
+        <button class="tab-btn" onclick="showTab('packing')" id="tab-packing">
+          <i class="ti ti-checklist" aria-hidden="true"></i> Packing List
+        </button>
+      </div>
+
+      <!-- TAB 1: EXPENSES -->
+      <div class="tab-content" id="tab-content-expenses">
+        <div class="two-col">
+
+          <div class="col">
+            <div class="card">
+              <div class="card-title"><i class="ti ti-circle-plus" aria-hidden="true"></i> Add Expense</div>
+              <div class="form-field">
+                <label>Expense name</label>
+                <input type="text" id="expenseName" placeholder="e.g. Beach resort stay">
+              </div>
+              <div class="form-field">
+                <label>Amount (₹)</label>
+                <input type="number" id="expenseAmount" placeholder="3200" min="0">
+              </div>
+              <div class="form-field">
+                <label>Category</label>
+                <select id="expenseCategory">
+                  <option value="food">Food</option>
+                  <option value="hotel">Hotel</option>
+                  <option value="transport">Transport</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <button onclick="addExpense()" class="add-btn">
+                <i class="ti ti-plus" aria-hidden="true"></i> Add Expense
+              </button>
+            </div>
+
+            <div class="card">
+              <div class="card-title"><i class="ti ti-list" aria-hidden="true"></i> All Expenses</div>
+              <div id="emptyExpenses" class="empty-state">
+                <i class="ti ti-mood-empty" aria-hidden="true"></i>
+                <p>No expenses yet. Add your first one!</p>
+              </div>
+              <ul class="expense-list" id="expenseList"></ul>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card">
+              <div class="card-title"><i class="ti ti-chart-donut" aria-hidden="true"></i> Spending Breakdown</div>
+              <div id="emptyChart" class="empty-state">
+                <i class="ti ti-chart-donut" aria-hidden="true"></i>
+                <p>Add expenses to see breakdown</p>
+              </div>
+              <canvas id="spendingChart" style="display:none; max-height:240px;"></canvas>
+            </div>
+
+            <!-- Budget tips card -->
+            <div class="card" id="tipsCard" style="display:none;">
+              <div class="card-title"><i class="ti ti-bulb" aria-hidden="true"></i> Budget tips</div>
+              <div class="tip-row" id="tipsList"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 2: AI ADVISOR -->
+      <div class="tab-content" id="tab-content-ai" style="display:none;">
+
+        <div class="card ai-feature-card">
+          <div class="card-title"><i class="ti ti-robot" aria-hidden="true"></i> AI Spending Analyser</div>
+          <p class="card-sub">Get personalised cost-cutting tips powered by Gemini</p>
+          <button onclick="getAIAdvice()" class="ai-btn">Analyse My Spending</button>
+          <div id="aiLoading" class="loading-dots" style="display:none;">
+            <span></span><span></span><span></span>
+          </div>
+          <div id="aiResponse" class="ai-response" style="display:none;"></div>
+        </div>
+
+        <div class="card ai-feature-card">
+          <div class="card-title"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Smart Budget Warning</div>
+          <p class="card-sub">AI flags risky spending patterns before it is too late</p>
+          <button onclick="getSmartWarning()" class="ai-btn">Check Budget Health</button>
+          <div id="warningLoading" class="loading-dots" style="display:none;">
+            <span></span><span></span><span></span>
+          </div>
+          <div id="warningResponse" class="ai-response" style="display:none;"></div>
+        </div>
+
+      </div>
+
+      <!-- TAB 3: PACKING LIST -->
+      <div class="tab-content" id="tab-content-packing" style="display:none;">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-checklist" aria-hidden="true"></i> AI Packing List Generator</div>
+          <p class="card-sub">Tell us your destination and we'll build your packing list</p>
+          <div class="form-field">
+            <label>Where are you going?</label>
+            <input type="text" id="destinationInput" placeholder="e.g. Goa, Manali, Kerala, Dubai">
+          </div>
+          <button onclick="generatePackingList()" class="ai-btn">Generate Packing List</button>
+          <div id="packingLoading" class="loading-dots" style="display:none;">
+            <span></span><span></span><span></span>
+          </div>
+          <div id="packingList" style="display:none;">
+            <h3 class="checklist-title">Your Packing List</h3>
+            <ul id="packingItems" class="packing-checklist"></ul>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <footer class="footer">WanderWise — Smart Trip Budget Planner</footer>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>

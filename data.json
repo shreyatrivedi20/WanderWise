@@ -1,0 +1,58 @@
+{
+  "trips": [
+    {
+      "id": "trip_1",
+      "name": "manali trip",
+      "budget": 7000,
+      "expenses": [
+        {
+          "id": 1,
+          "name": "train tickets",
+          "amount": 2000,
+          "category": "transport"
+        },
+        {
+          "id": 2,
+          "name": "hotel",
+          "amount": 1500,
+          "category": "hotel"
+        },
+        {
+          "id": 3,
+          "name": "food",
+          "amount": 1000,
+          "category": "food"
+        },
+        {
+          "id": 4,
+          "name": "local transport",
+          "amount": 100,
+          "category": "transport"
+        }
+      ]
+    },
+    {
+      "id": "trip_2",
+      "name": "goa trip",
+      "budget": 30000,
+      "destination": "Goa",
+      "dates": "13 june - 18june",
+      "expenses": [
+        {
+          "id": 1,
+          "name": "resort",
+          "amount": 3000,
+          "category": "hotel",
+          "time": "10 Jun, 10:39 pm"
+        },
+        {
+          "id": 2,
+          "name": "flights",
+          "amount": 10000,
+          "category": "transport",
+          "time": "10 Jun, 10:40 pm"
+        }
+      ]
+    }
+  ]
+}
